@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="RDRAND Lab: a local hardware-seeded pseudorandom generator, Windows app, and browser extension.">
-  <title>RDRAND Lab - Local hardware-seeded random generation</title>
+  <meta name="description" content="Try the live RDRAND Lab browser demo, explore random generation, and download the local Windows app and browser extension.">
+  <title>RDRAND Lab - Interactive random generator demo</title>
   <style>
     :root { color-scheme: dark; font-family: Inter, "Segoe UI", system-ui, sans-serif; color: #edf8f4; background: #08110f; }
     * { box-sizing: border-box; }
@@ -14,6 +14,25 @@
     .eyebrow { color: #71f5bc; font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
     h1 { max-width: 720px; margin: 14px 0; font-size: clamp(2.8rem, 8vw, 5.5rem); line-height: .98; letter-spacing: -.06em; }
     .lead { max-width: 660px; color: #b0c5bd; font-size: 1.12rem; line-height: 1.7; }
+    .demo { margin: 36px 0; padding: 24px; border: 1px solid #29463d; border-radius: 16px; background: #0d1a17; }
+    .demo-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+    .demo h2 { margin: 0 0 8px; font-size: 1.5rem; }
+    .demo-heading p { margin: 0; color: #a4b9b1; line-height: 1.55; }
+    .demo-status { flex: 0 0 auto; padding: 7px 10px; border: 1px solid #3b6757; border-radius: 999px; color: #71f5bc; font-size: .78rem; }
+    .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: end; }
+    label { display: block; color: #a4b9b1; font-size: .85rem; }
+    label span { display: block; margin-bottom: 7px; }
+    input, select { width: 100%; padding: 11px 12px; border: 1px solid #29463d; border-radius: 8px; background: #08110f; color: #edf8f4; font: inherit; }
+    input:focus, select:focus, button:focus-visible, a:focus-visible { outline: 2px solid #71f5bc; outline-offset: 2px; }
+    .demo-actions { display: flex; gap: 10px; margin-top: 14px; }
+    button { padding: 11px 14px; border: 0; border-radius: 8px; background: #71f5bc; color: #062016; font: inherit; font-weight: 750; cursor: pointer; }
+    button.secondary { border: 1px solid #3b6757; background: transparent; color: #edf8f4; }
+    button:disabled { cursor: not-allowed; opacity: .5; }
+    .demo-message { margin: 14px 0 0; padding: 10px 12px; border: 1px solid #714545; border-radius: 8px; color: #ffaaaa; }
+    .results-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 22px 0 10px; color: #a4b9b1; font-size: .85rem; }
+    .results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 330px; overflow: auto; margin: 0; padding: 0; list-style: none; }
+    .results li { min-width: 0; overflow-wrap: anywhere; padding: 9px 11px; border-radius: 7px; background: #08110f; color: #edf8f4; font: .82rem "Cascadia Code", Consolas, monospace; }
+    .demo-note { margin: 14px 0 0; color: #ffd17c; font-size: .82rem; line-height: 1.55; }
     .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 38px 0; }
     .card { padding: 23px; border: 1px solid #29463d; border-radius: 16px; background: #0d1a17; }
     .card h2 { margin: 0 0 10px; font-size: 1.25rem; }
@@ -25,14 +44,57 @@
     a { color: #71f5bc; }
     .warning { margin-top: 28px; color: #ffd17c; line-height: 1.6; }
     footer { margin-top: 48px; border-top: 1px solid #223d36; padding-top: 20px; color: #91aaa2; font-size: .85rem; line-height: 1.6; }
-    @media (max-width: 650px) { .downloads { grid-template-columns: 1fr; } main { padding-top: 8vh; } }
+    @media (max-width: 650px) { .downloads, .controls { grid-template-columns: 1fr; } main { padding-top: 8vh; } .demo-heading { flex-direction: column; } .results { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main>
-    <p class="eyebrow">Open source - runs locally</p>
+    <p class="eyebrow">Interactive demo · local app available</p>
     <h1>RDRAND Lab</h1>
-    <p class="lead">A lightweight C++ app seeded with the CPU's RDRAND instruction, with a browser extension for quick access. Random generation happens on your own computer; this website does not generate or collect random values.</p>
+    <p class="lead">Explore random generation right in your browser, or download the local C++ app and browser extension. This live demo works immediately without installing anything.</p>
+
+    <section class="demo" aria-labelledby="demo-title">
+      <div class="demo-heading">
+        <div>
+          <h2 id="demo-title">Try the live demo</h2>
+          <p>Generate up to 1,000 random values using this browser's Web Crypto API.</p>
+        </div>
+        <span id="demo-status" class="demo-status" role="status">Checking browser support…</span>
+      </div>
+      <form id="demo-form">
+        <div class="controls">
+          <label>
+            <span>Number of values</span>
+            <input id="demo-count" type="number" min="1" max="1000" value="16" required>
+          </label>
+          <label>
+            <span>Exclusive upper bound</span>
+            <input id="demo-bound" type="text" inputmode="numeric" maxlength="20" pattern="[0-9]+" value="100" aria-describedby="bound-help" required>
+          </label>
+          <label>
+            <span>Display format</span>
+            <select id="demo-format">
+              <option value="decimal">Decimal</option>
+              <option value="hex">Hexadecimal</option>
+            </select>
+          </label>
+        </div>
+        <div id="bound-help" class="demo-note">Use 0 for full-width unsigned 64-bit values (0 to 18,446,744,073,709,551,615).</div>
+        <div class="demo-actions">
+          <button id="generate-button" type="submit">Generate values</button>
+          <button id="copy-button" class="secondary" type="button" disabled>Copy values</button>
+        </div>
+      </form>
+      <p id="demo-message" class="demo-message" role="alert" hidden></p>
+      <div class="results-heading">
+        <strong>Latest batch</strong>
+        <span><span id="batch-count">0</span> values · <span id="total-count">0</span> total</span>
+      </div>
+      <ol id="demo-results" class="results" aria-live="polite">
+        <li>Choose your settings and generate a batch to try it.</li>
+      </ol>
+      <p class="demo-note"><strong>Important:</strong> this website demo uses Web Crypto, not the CPU's RDRAND instruction. To test actual RDRAND-seeded generation, use the downloadable local app. Neither generator should be used for cryptographic secrets unless its security properties meet your requirements.</p>
+    </section>
 
     <section class="downloads" aria-label="Downloads">
       <article class="card">
@@ -62,8 +124,107 @@
       <p>Extract the source ZIP, install CMake and a C++17 compiler (such as Visual Studio Build Tools), then run <code>.\tools\package-windows-release.ps1</code> in PowerShell. Start <code>Start RDRAND Lab.cmd</code> from the generated portable bundle.</p>
     </section>
 
-    <p class="warning">Security note: xoshiro256** is not a cryptographic generator. Do not use its output for passwords, keys, tokens, or nonces. The extension requests access only to the local app at 127.0.0.1:8787.</p>
-    <footer>RDRAND is checked for CPU support at runtime. Hardware/VM availability may vary. The public website serves download files only; the C++ backend and random generation run locally.</footer>
+    <p class="warning">The local C++ app uses RDRAND to seed xoshiro256**, which is not a cryptographic generator. Do not use that app's output for passwords, keys, tokens, or nonces. The browser extension requests access only to the local app at 127.0.0.1:8787.</p>
+    <footer>The interactive hosted demo uses the browser's Web Crypto API. The downloadable C++ app checks RDRAND support at runtime and performs hardware-seeded generation locally. The website does not access your CPU's RDRAND instruction.</footer>
   </main>
+  <script>
+    (() => {
+      const fullRange = 1n << 64n;
+      const status = document.querySelector('#demo-status');
+      const form = document.querySelector('#demo-form');
+      const countInput = document.querySelector('#demo-count');
+      const boundInput = document.querySelector('#demo-bound');
+      const format = document.querySelector('#demo-format');
+      const generateButton = document.querySelector('#generate-button');
+      const copyButton = document.querySelector('#copy-button');
+      const message = document.querySelector('#demo-message');
+      const results = document.querySelector('#demo-results');
+      const batchCount = document.querySelector('#batch-count');
+      const totalCount = document.querySelector('#total-count');
+      let latestValues = [];
+      let totalGenerated = 0;
+
+      function randomU64() {
+        const words = new Uint32Array(2);
+        crypto.getRandomValues(words);
+        return (BigInt(words[0]) << 32n) | BigInt(words[1]);
+      }
+
+      function randomBounded(bound) {
+        if (bound === 0n) return randomU64();
+        const limit = fullRange - (fullRange % bound);
+        let value;
+        do {
+          value = randomU64();
+        } while (value >= limit);
+        return value % bound;
+      }
+
+      function formatValue(value) {
+        return format.value === 'hex'
+          ? `0x${value.toString(16).padStart(16, '0')}`
+          : value.toString();
+      }
+
+      function renderValues() {
+        results.replaceChildren(...latestValues.map((value) => {
+          const item = document.createElement('li');
+          item.textContent = formatValue(value);
+          return item;
+        }));
+      }
+
+      if (globalThis.isSecureContext && globalThis.crypto?.getRandomValues) {
+        status.textContent = 'Browser demo ready · Web Crypto';
+      } else {
+        status.textContent = 'Secure browser context required';
+        generateButton.disabled = true;
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        message.hidden = true;
+        generateButton.disabled = true;
+        try {
+          const count = Number(countInput.value);
+          const boundText = boundInput.value;
+          if (!Number.isInteger(count) || count < 1 || count > 1000) {
+            throw new Error('Choose between 1 and 1,000 values.');
+          }
+          if (!/^[0-9]+$/.test(boundText)) {
+            throw new Error('Enter a whole-number bound, or use 0 for full-width values.');
+          }
+          const bound = BigInt(boundText);
+          if (bound >= fullRange) {
+            throw new Error('The bound must be less than 18,446,744,073,709,551,616.');
+          }
+          latestValues = Array.from({ length: count }, () => randomBounded(bound));
+          totalGenerated += count;
+          renderValues();
+          batchCount.textContent = String(count);
+          totalCount.textContent = totalGenerated.toLocaleString();
+          copyButton.disabled = false;
+        } catch (error) {
+          message.textContent = error instanceof Error ? error.message : String(error);
+          message.hidden = false;
+        } finally {
+          generateButton.disabled = status.textContent !== 'Browser demo ready · Web Crypto';
+        }
+      });
+
+      format.addEventListener('change', renderValues);
+
+      copyButton.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(latestValues.map(formatValue).join('\n'));
+          copyButton.textContent = 'Copied';
+          setTimeout(() => { copyButton.textContent = 'Copy values'; }, 1200);
+        } catch {
+          message.textContent = 'Clipboard access was denied by the browser.';
+          message.hidden = false;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
