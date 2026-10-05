@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Explore random number generation in a live, interactive RDRAND Lab browser demo.">
+  <title>RDRAND Lab — Randomness, made tangible</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #10191d;
+      --ink-raised: #172329;
+      --paper: #f4f5f1;
+      --white: #f6f8f7;
+      --muted: #a8b4b5;
+      --quiet: #738184;
+      --acid: #c7f36b;
+      --line: rgba(220, 234, 229, .15);
+      --red: #ff9382;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      background: var(--ink);
+      color: var(--white);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 86px; }
+    body { margin: 0; min-width: 320px; background: var(--ink); }
+    button, input, select { font: inherit; }
+    button, a, input, select { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--acid); outline-offset: 3px; }
+    .topbar { position: sticky; z-index: 5; top: 0; display: flex; align-items: center; justify-content: space-between; min-height: 70px; padding: 0 max(28px, calc((100vw - 1240px) / 2)); border-bottom: 1px solid #e2e7e3; background: var(--paper); color: var(--ink); }
+    .brand { display: inline-flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; }
+    .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; background: var(--acid); font-size: 15px; font-weight: 950; font-style: italic; }
+    .brand-name { display: flex; flex-direction: column; gap: 2px; font-size: 17px; font-weight: 900; letter-spacing: -.04em; }
+    .brand-name small { color: #6c7978; font-size: 8px; font-weight: 700; letter-spacing: .18em; }
+    .topnav { display: flex; align-items: center; gap: 4px; }
+    .topnav a { padding: 10px 12px; color: #596665; font-size: 12px; font-weight: 650; text-decoration: none; }
+    .topnav a:hover { color: var(--ink); }
+    .topnav .nav-cta { margin-left: 8px; background: var(--ink); color: white; }
+    .hero { position: relative; overflow: hidden; padding: 76px max(28px, calc((100vw - 1160px) / 2)) 46px; background: radial-gradient(ellipse at 95% 0%, rgba(199,243,107,.08), transparent 33%), var(--ink); }
+    .hero::before, .hero::after { position: absolute; z-index: 0; top: -480px; right: -110px; width: 800px; height: 800px; border: 1px solid rgba(209,230,221,.11); border-radius: 50%; content: ""; pointer-events: none; }
+    .hero::after { top: -390px; right: -40px; width: 650px; height: 650px; border-color: rgba(209,230,221,.055); }
+    .hero-inner { position: relative; z-index: 1; max-width: 1160px; margin: 0 auto; }
+    .kicker { display: flex; align-items: center; gap: 10px; color: var(--muted); font: 700 10px/1.4 "Cascadia Code", Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; }
+    .kicker::before { width: 8px; height: 8px; border-radius: 50%; background: var(--acid); content: ""; }
+    .hero h1 { max-width: 760px; margin: 25px 0 18px; font-size: clamp(52px, 8vw, 94px); font-weight: 400; letter-spacing: -.075em; line-height: .96; }
+    .hero h1 span { color: var(--acid); font-weight: 750; }
+    .hero-copy { max-width: 610px; margin: 0; color: #b7c1c1; font-size: 15px; line-height: 1.75; }
+    .hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 800px; margin-top: 40px; border: 1px solid var(--line); }
+    .hero-stat { min-height: 78px; padding: 14px 18px; }
+    .hero-stat + .hero-stat { border-left: 1px solid var(--line); }
+    .hero-stat small { display: block; margin-bottom: 8px; color: var(--quiet); font: 700 9px "Cascadia Code", Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; }
+    .hero-stat strong { font: 750 24px "Cascadia Code", Consolas, monospace; letter-spacing: -.05em; }
+    .workspace { max-width: 1220px; margin: 0 auto; padding: 0 30px 72px; }
+    .section-nav { position: sticky; z-index: 3; top: 69px; display: flex; gap: 24px; overflow: auto; padding: 0 22px; border-bottom: 1px solid var(--line); background: var(--ink); scrollbar-width: none; }
+    .section-nav::-webkit-scrollbar { display: none; }
+    .section-nav a { flex: 0 0 auto; padding: 18px 0 15px; border-bottom: 3px solid transparent; color: #9aa6a7; font-size: 11px; font-weight: 650; text-decoration: none; }
+    .section-nav a:hover, .section-nav a.active { border-color: var(--acid); color: var(--white); }
+    .overview-bar { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 24px 2px 16px; }
+    .eyebrow { margin: 0 0 7px; color: var(--acid); font: 700 9px "Cascadia Code", Consolas, monospace; letter-spacing: .17em; text-transform: uppercase; }
+    .section-title { margin: 0; font-size: 20px; letter-spacing: -.035em; }
+    .runtime { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 10px; }
+    .runtime-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 12px rgba(199,243,107,.45); }
+    .runtime[data-state="error"] .runtime-dot { background: var(--red); box-shadow: none; }
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(310px, .75fr); gap: 14px; }
+    .panel { min-width: 0; border: 1px solid var(--line); background: var(--ink-raised); }
+    .panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 22px 23px 18px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { margin: 0; font-size: 17px; letter-spacing: -.035em; }
+    .panel-head p { margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .chip { flex: 0 0 auto; padding: 6px 8px; border: 1px solid var(--line); color: #c3cece; font: 700 9px "Cascadia Code", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .chip.acid { border-color: rgba(199,243,107,.38); color: var(--acid); }
+    .generator-body { padding: 21px 23px 23px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { display: block; color: #b3c0c0; font-size: 10px; font-weight: 650; }
+    .field > span { display: block; margin-bottom: 7px; }
+    .field input, .field select { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid #35474b; border-radius: 0; background: #111b1f; color: var(--white); font-size: 12px; }
+    .field small { display: block; margin-top: 6px; color: var(--quiet); font-size: 9px; font-weight: 400; line-height: 1.5; }
+    .input-footnote { margin: 11px 0 0; color: var(--quiet); font: 9px/1.55 "Cascadia Code", Consolas, monospace; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 17px; }
+    .button { min-height: 39px; padding: 0 14px; border: 1px solid var(--acid); border-radius: 0; background: var(--acid); color: #13200d; font-size: 10px; font-weight: 850; cursor: pointer; transition: background .15s ease, transform .15s ease; }
+    .button:hover:not(:disabled) { transform: translateY(-1px); background: #d6ff89; }
+    .button.secondary { border-color: #526266; background: transparent; color: var(--white); }
+    .button.secondary:hover:not(:disabled) { border-color: var(--acid); color: var(--acid); }
+    .button:disabled { cursor: not-allowed; opacity: .48; }
+    .error { margin: 13px 0 0; padding: 10px; border: 1px solid rgba(255,147,130,.35); color: var(--red); font-size: 10px; line-height: 1.5; }
+    .batch-meta { display: flex; justify-content: space-between; gap: 14px; margin-top: 24px; padding-bottom: 10px; border-bottom: 1px solid var(--line); color: var(--muted); font: 9px "Cascadia Code", Consolas, monospace; letter-spacing: .04em; text-transform: uppercase; }
+    .output { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; max-height: 240px; overflow: auto; margin: 0; padding: 9px 0 0; list-style: none; scrollbar-color: #49605c transparent; }
+    .output li { overflow: hidden; padding: 8px 9px; border: 1px solid rgba(220,234,229,.075); background: #121d21; color: #e2e9e6; font: 10px "Cascadia Code", Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .output .empty { grid-column: 1 / -1; padding: 25px 10px; color: var(--quiet); font-family: inherit; text-align: center; white-space: normal; }
+    .side-stack { display: grid; grid-template-rows: auto 1fr; gap: 14px; }
+    .engine-card { padding: 22px; }
+    .engine-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .engine-top h2 { margin: 0; font-size: 16px; letter-spacing: -.03em; }
+    .engine-card > p { margin: 10px 0 18px; color: var(--muted); font-size: 11px; line-height: 1.65; }
+    .engine-card > p strong { color: var(--white); }
+    .engine-flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 8px; padding-top: 17px; border-top: 1px solid var(--line); }
+    .flow-step { min-width: 0; }
+    .flow-step small, .flow-step strong { display: block; }
+    .flow-step small { color: var(--quiet); font: 8px "Cascadia Code", Consolas, monospace; }
+    .flow-step strong { margin-top: 5px; overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
+    .flow-arrow { color: var(--acid); font-size: 12px; }
+    .distribution { scroll-margin-top: 120px; }
+    .distribution-body { padding: 18px 20px 19px; }
+    .distribution-body > p { margin: 0 0 12px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+    .sim-settings { display: flex; align-items: end; gap: 8px; }
+    .sim-settings .field { flex: 1; }
+    .sim-settings .field input { min-height: 36px; }
+    .sim-settings .button { min-height: 36px; padding: 0 10px; }
+    .chart { display: grid; gap: 8px; margin-top: 17px; }
+    .chart-row { display: grid; grid-template-columns: 42px 1fr 48px; align-items: center; gap: 8px; color: #bdc8c8; font: 9px "Cascadia Code", Consolas, monospace; }
+    .bar-track { height: 13px; background: #0e181c; }
+    .bar { height: 100%; min-width: 1px; background: #758b81; transition: width .35s ease; }
+    .chart-row:first-child .bar { background: var(--acid); }
+    .chart-empty { padding: 18px 0; color: var(--quiet); font-size: 10px; text-align: center; }
+    .sim-summary { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--line); color: var(--quiet); font: 8px "Cascadia Code", Consolas, monospace; text-transform: uppercase; }
+    .lower-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .info-card { padding: 22px; scroll-margin-top: 120px; }
+    .info-card h2 { margin: 0 0 9px; font-size: 15px; }
+    .info-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+    .info-card p + p { margin-top: 9px; }
+    .download-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+    .download-links a { display: inline-flex; align-items: center; min-height: 34px; padding: 0 10px; border: 1px solid #506064; color: var(--white); font-size: 9px; font-weight: 700; text-decoration: none; }
+    .download-links a:hover { border-color: var(--acid); color: var(--acid); }
+    .footer { display: flex; justify-content: space-between; gap: 20px; margin-top: 38px; padding: 18px 2px 0; border-top: 1px solid var(--line); color: var(--quiet); font-size: 9px; line-height: 1.6; }
+    .footer p { max-width: 720px; margin: 0; }
+    .footer a { flex: 0 0 auto; color: var(--acid); text-decoration: none; }
+    @media (max-width: 860px) { .main-grid { grid-template-columns: 1fr; } .side-stack { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; } }
+    @media (max-width: 620px) {
+      .topbar { min-height: 60px; padding: 0 16px; }
+      .brand-mark { width: 30px; height: 30px; }
+      .topnav { gap: 0; }
+      .topnav a { padding: 9px 7px; font-size: 10px; }
+      .topnav a:nth-child(2) { display: none; }
+      .topnav .nav-cta { margin-left: 3px; }
+      .hero { padding: 56px 20px 32px; }
+      .hero h1 { margin-top: 22px; font-size: clamp(50px, 13vw, 76px); }
+      .hero-copy { font-size: 13px; }
+      .hero-stats { margin-top: 29px; }
+      .hero-stat { min-height: 70px; padding: 11px 10px; }
+      .hero-stat strong { font-size: 19px; }
+      .hero-stat small { font-size: 7px; }
+      .workspace { padding: 0 14px 48px; }
+      .section-nav { top: 59px; gap: 19px; padding: 0 8px; }
+      .section-nav a { padding: 15px 0 12px; font-size: 10px; }
+      .overview-bar { padding-top: 19px; }
+      .main-grid { gap: 10px; }
+      .panel-head { padding: 18px 16px 15px; }
+      .generator-body { padding: 17px 16px; }
+      .fields { gap: 10px; }
+      .output { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .side-stack, .lower-grid { grid-template-columns: 1fr; gap: 10px; }
+      .engine-card, .distribution-body, .info-card { padding: 17px 16px; }
+      .footer { flex-direction: column; gap: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="RDRAND Lab home">
+      <span class="brand-mark">R</span>
+      <span class="brand-name">RDRAND LAB<small>RANDOMNESS, MADE TANGIBLE</small></span>
+    </a>
+    <nav class="topnav" aria-label="Primary navigation">
+      <a href="#generator">Generator</a>
+      <a href="#distribution">Distribution</a>
+      <a class="nav-cta" href="#downloads">Get the app ↗</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="home">
+    <div class="hero-inner">
+      <p class="kicker">Interactive lab · explainable · runs in your browser</p>
+      <h1>Meet your next<br><span>random number.</span></h1>
+      <p class="hero-copy">Generate values, explore a fair distribution, and inspect exactly how randomness works. Start experimenting here—no install or account required.</p>
+      <div class="hero-stats" aria-label="Demo highlights">
+        <div class="hero-stat"><small>LIVE BROWSER DEMO</small><strong>01</strong></div>
+        <div class="hero-stat"><small>MAX VALUES / BATCH</small><strong>1,000</strong></div>
+        <div class="hero-stat"><small>DATA SENT TO SERVER</small><strong>00</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="workspace">
+    <nav class="section-nav" aria-label="Lab sections">
+      <a class="active" href="#generator">Generator</a>
+      <a href="#distribution">Distribution lab</a>
+      <a href="#method">Methodology</a>
+      <a href="#downloads">Downloads</a>
+    </nav>
+
+    <div class="overview-bar">
+      <div>
+        <p class="eyebrow">Your workspace</p>
+        <h2 class="section-title">Random number lab</h2>
+      </div>
+      <span id="demo-status" class="runtime" data-state="ready" role="status"><i class="runtime-dot" aria-hidden="true"></i><span>Checking secure browser…</span></span>
+    </div>
+
+    <section class="main-grid" id="generator" aria-label="Generator dashboard">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Generate a batch</h2>
+            <p>Choose your range and format. Values are generated in this browser tab.</p>
+          </div>
+          <span class="chip acid">Web Crypto</span>
+        </div>
+        <div class="generator-body">
+          <form id="demo-form" novalidate>
+            <div class="fields">
+              <label class="field">
+                <span>NUMBER OF VALUES</span>
+                <input id="demo-count" type="number" min="1" max="1000" value="16">
+                <small>1 to 1,000 per batch</small>
+              </label>
+              <label class="field">
+                <span>EXCLUSIVE UPPER BOUND</span>
+                <input id="demo-bound" type="text" inputmode="numeric" maxlength="20" value="100" aria-describedby="bound-help">
+                <small id="bound-help">0 = full unsigned 64-bit range</small>
+              </label>
+              <label class="field">
+                <span>DISPLAY FORMAT</span>
+                <select id="demo-format">
+                  <option value="decimal">Decimal</option>
+                  <option value="hex">Hexadecimal</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>QUICK PRESET</span>
+                <select id="demo-preset">
+                  <option value="custom">Custom range</option>
+                  <option value="6">Six-sided die · 1–6</option>
+                  <option value="100">Percent · 0–99</option>
+                  <option value="0">Full-width · uint64</option>
+                </select>
+              </label>
+            </div>
+            <p class="input-footnote">For bounded output, the demo uses rejection sampling to avoid modulo bias.</p>
+            <div class="button-row">
+              <button id="generate-button" class="button" type="submit">Generate values →</button>
+              <button id="copy-button" class="button secondary" type="button" disabled>Copy batch</button>
+              <button id="export-button" class="button secondary" type="button" disabled>Export CSV</button>
+            </div>
+          </form>
+          <p id="demo-message" class="error" role="alert" hidden></p>
+          <div class="batch-meta">
+            <span>Latest batch · <span id="batch-count">0</span> values</span>
+            <span><span id="total-count">0</span> generated this session</span>
+          </div>
+          <ol id="demo-results" class="output" aria-live="polite">
+            <li class="empty">Your generated values will appear here.</li>
+          </ol>
+        </div>
+      </article>
+
+      <div class="side-stack">
+        <article class="panel engine-card" id="method">
+          <div class="engine-top">
+            <div>
+              <p class="eyebrow">Under the hood</p>
+              <h2>Two ways to make a number</h2>
+            </div>
+            <span class="chip">LOCAL-FIRST</span>
+          </div>
+          <p><strong>This hosted demo uses Web Crypto.</strong> It runs in your browser and does not send generated values to a server. The desktop app is separate: it seeds xoshiro256** with the CPU's RDRAND instruction.</p>
+          <div class="engine-flow" aria-label="Local application generation pipeline">
+            <div class="flow-step"><small>01 · SOURCE</small><strong>RDRAND</strong></div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="flow-step"><small>02 · SEED</small><strong>256-bit state</strong></div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="flow-step"><small>03 · OUTPUT</small><strong>xoshiro256**</strong></div>
+          </div>
+        </article>
+
+        <article class="panel distribution" id="distribution">
+          <div class="panel-head">
+            <div>
+              <h2>Fairness, in practice</h2>
+              <p>Roll a virtual six-sided die and compare the counts.</p>
+            </div>
+            <span class="chip">D6 TEST</span>
+          </div>
+          <div class="distribution-body">
+            <p>Each face has an expected frequency of about one-sixth. Small differences are normal in a random sample.</p>
+            <div class="sim-settings">
+              <label class="field">
+                <span>NUMBER OF ROLLS</span>
+                <input id="roll-count" type="number" min="100" max="10000" step="100" value="1000">
+              </label>
+              <button id="roll-button" class="button" type="button">Run test</button>
+            </div>
+            <div id="chart" class="chart" aria-live="polite"><div class="chart-empty">Run a sample to see the distribution.</div></div>
+            <div class="sim-summary"><span id="roll-total">0 rolls</span><span id="roll-expected">Expected · — / face</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="lower-grid" id="downloads">
+      <article class="panel info-card">
+        <p class="eyebrow">For the desktop</p>
+        <h2>Try the actual RDRAND app</h2>
+        <p>The hosted demo cannot access a CPU's RDRAND instruction. Download the C++ source and build it locally with CMake and a C++17 compiler to try the hardware-seeded app.</p>
+        <div class="download-links">
+          <a href="rdrand-lab-source.zip">Download app source ZIP ↓</a>
+          <a href="rdrand-lab-extension.zip">Download browser extension ↓</a>
+        </div>
+      </article>
+      <article class="panel info-card">
+        <p class="eyebrow">A note on security</p>
+        <h2>Built to explore, not to protect secrets</h2>
+        <p>The browser's Web Crypto API is intended for secure random bytes, but this page is an educational generator demo. The desktop app's xoshiro256** PRNG is explicitly non-cryptographic.</p>
+        <p>Do not use the desktop app for keys, passwords, tokens, or nonces. Generated demo values stay in this tab.</p>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <p>Browser demo: Web Crypto API · local desktop app: RDRAND-seeded xoshiro256** · bounded values use rejection sampling.</p>
+      <a href="https://github.com/tenoaddisi-tech/rdp-parchment-">Source on GitHub ↗</a>
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      const fullRange = 1n << 64n;
+      const status = document.querySelector('#demo-status');
+      const form = document.querySelector('#demo-form');
+      const countInput = document.querySelector('#demo-count');
+      const boundInput = document.querySelector('#demo-bound');
+      const format = document.querySelector('#demo-format');
+      const preset = document.querySelector('#demo-preset');
+      const generateButton = document.querySelector('#generate-button');
+      const copyButton = document.querySelector('#copy-button');
+      const exportButton = document.querySelector('#export-button');
+      const message = document.querySelector('#demo-message');
+      const results = document.querySelector('#demo-results');
+      const batchCount = document.querySelector('#batch-count');
+      const totalCount = document.querySelector('#total-count');
+      const rollCount = document.querySelector('#roll-count');
+      const chart = document.querySelector('#chart');
+      const rollTotal = document.querySelector('#roll-total');
+      const rollExpected = document.querySelector('#roll-expected');
+      let latestValues = [];
+      let totalGenerated = 0;
+      let dieCounts = null;
+
+      function randomU64() {
+        const words = new Uint32Array(2);
+        crypto.getRandomValues(words);
+        return (BigInt(words[0]) << 32n) | BigInt(words[1]);
+      }
+
+      function randomBounded(bound) {
+        if (bound === 0n) return randomU64();
+        const limit = fullRange - (fullRange % bound);
+        let value;
+        do {
+          value = randomU64();
+        } while (value >= limit);
+        return value % bound;
+      }
+
+      function formatValue(value) {
+        return format.value === 'hex'
+          ? `0x${value.toString(16).padStart(16, '0')}`
+          : value.toString();
+      }
+
+      function renderValues() {
+        if (latestValues.length === 0) return;
+        results.replaceChildren(...latestValues.map((value) => {
+          const item = document.createElement('li');
+          item.textContent = formatValue(value);
+          return item;
+        }));
+      }
+
+      function showError(text) {
+        message.textContent = text;
+        message.hidden = false;
+      }
+
+      if (globalThis.isSecureContext && globalThis.crypto?.getRandomValues) {
+        status.querySelector('span').textContent = 'Browser demo ready · Web Crypto';
+      } else {
+        status.dataset.state = 'error';
+        status.querySelector('span').textContent = 'Secure HTTPS browser required';
+        generateButton.disabled = true;
+        document.querySelector('#roll-button').disabled = true;
+      }
+
+      preset.addEventListener('change', () => {
+        if (preset.value === '6') {
+          boundInput.value = '6';
+          countInput.value = '16';
+        } else if (preset.value === '100') {
+          boundInput.value = '100';
+        } else if (preset.value === '0') {
+          boundInput.value = '0';
+        }
+      });
+      boundInput.addEventListener('input', () => { preset.value = 'custom'; });
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        message.hidden = true;
+        try {
+          const count = Number(countInput.value);
+          if (!Number.isInteger(count) || count < 1 || count > 1000) {
+            throw new Error('Choose between 1 and 1,000 values per batch.');
+          }
+          const boundText = boundInput.value;
+          if (!/^[0-9]+$/.test(boundText)) {
+            throw new Error('Enter a whole-number bound, or use 0 for full-width values.');
+          }
+          const bound = BigInt(boundText);
+          if (bound >= fullRange) {
+            throw new Error('The bound must be less than 18,446,744,073,709,551,616.');
+          }
+          latestValues = Array.from({ length: count }, () => randomBounded(bound));
+          totalGenerated += count;
+          renderValues();
+          batchCount.textContent = String(count);
+          totalCount.textContent = totalGenerated.toLocaleString();
+          copyButton.disabled = false;
+          exportButton.disabled = false;
+        } catch (error) {
+          showError(error instanceof Error ? error.message : String(error));
+        }
+      });
+
+      format.addEventListener('change', renderValues);
+
+      copyButton.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(latestValues.map(formatValue).join('\n'));
+          copyButton.textContent = 'Copied ✓';
+          setTimeout(() => { copyButton.textContent = 'Copy batch'; }, 1400);
+        } catch {
+          showError('Clipboard access was denied by the browser.');
+        }
+      });
+
+      exportButton.addEventListener('click', () => {
+        const csv = `index,value\n${latestValues.map((value, index) => `${index + 1},${formatValue(value)}`).join('\n')}\n`;
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'rdrand-lab-values.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      function randomDieFace() {
+        const words = new Uint32Array(64);
+        const range = 0x100000000;
+        const limit = range - (range % 6);
+        while (true) {
+          crypto.getRandomValues(words);
+          for (const word of words) {
+            if (word < limit) return (word % 6) + 1;
+          }
+        }
+      }
+
+      function renderDistribution(counts, rolls) {
+        const expected = rolls / 6;
+        const maxCount = Math.max(...counts);
+        chart.replaceChildren(...counts.map((count, index) => {
+          const row = document.createElement('div');
+          row.className = 'chart-row';
+          const label = document.createElement('span');
+          label.textContent = `FACE ${index + 1}`;
+          const track = document.createElement('div');
+          track.className = 'bar-track';
+          const bar = document.createElement('div');
+          bar.className = 'bar';
+          bar.style.width = `${Math.max(1, (count / maxCount) * 100)}%`;
+          track.append(bar);
+          const value = document.createElement('span');
+          value.textContent = `${count} · ${((count / rolls) * 100).toFixed(1)}%`;
+          row.append(label, track, value);
+          return row;
+        }));
+        rollTotal.textContent = `${rolls.toLocaleString()} rolls`;
+        rollExpected.textContent = `Expected · ${expected.toFixed(1)} / face`;
+      }
+
+      document.querySelector('#roll-button').addEventListener('click', () => {
+        const rolls = Number(rollCount.value);
+        if (!Number.isInteger(rolls) || rolls < 100 || rolls > 10000) {
+          showError('Distribution test must contain between 100 and 10,000 rolls.');
+          return;
+        }
+        const counts = [0, 0, 0, 0, 0, 0];
+        for (let index = 0; index < rolls; index += 1) counts[randomDieFace() - 1] += 1;
+        dieCounts = counts;
+        renderDistribution(dieCounts, rolls);
+      });
+    })();
+  </script>
+</body>
+</html>
