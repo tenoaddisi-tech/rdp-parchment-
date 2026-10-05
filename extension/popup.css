@@ -1,0 +1,34 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: #edf8f4;
+  background: #08110f;
+}
+
+* { box-sizing: border-box; }
+body { width: 380px; margin: 0; }
+main { padding: 18px; }
+header, .actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.eyebrow { margin: 0 0 5px; color: #71f5bc; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+h1 { margin: 0; font-size: 24px; letter-spacing: -.04em; }
+.status { padding: 6px 9px; border: 1px solid #223d36; border-radius: 999px; color: #91aaa2; font-size: 11px; }
+.status[data-state="ready"] { color: #71f5bc; }
+.status[data-state="error"] { color: #ff8c8c; }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 16px 0; }
+.metrics div { min-width: 0; padding: 10px; border: 1px solid #223d36; border-radius: 10px; background: #0d1a17; }
+.metrics span, .metrics strong { display: block; overflow: hidden; text-overflow: ellipsis; }
+.metrics span { margin-bottom: 6px; color: #91aaa2; font-size: 10px; }
+.metrics strong { font-size: 12px; white-space: nowrap; }
+form { display: grid; gap: 11px; }
+label { color: #91aaa2; font-size: 12px; }
+input { display: block; width: 100%; margin-top: 5px; padding: 9px; border: 1px solid #223d36; border-radius: 8px; background: #08110f; color: #edf8f4; font: inherit; }
+small { display: block; margin-top: 4px; color: #91aaa2; font-size: 10px; }
+button { padding: 9px 11px; border: 0; border-radius: 8px; background: #71f5bc; color: #062016; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+.actions { margin-top: 8px; }
+.secondary { border: 1px solid #223d36; background: transparent; color: #edf8f4; }
+#values { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; max-height: 180px; overflow: auto; margin: 12px 0 0; padding: 0; list-style: none; }
+#values li { overflow: hidden; padding: 7px; border-radius: 6px; background: #0d1a17; font: 11px "Cascadia Code", Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }
+#values .placeholder { grid-column: 1 / -1; color: #91aaa2; font-family: inherit; text-align: center; }
+.message { padding: 9px; border: 1px solid #714545; border-radius: 8px; color: #ff8c8c; font-size: 12px; }
+footer { margin-top: 14px; color: #91aaa2; font-size: 10px; line-height: 1.5; }

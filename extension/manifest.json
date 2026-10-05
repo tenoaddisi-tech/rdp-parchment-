@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "RDRAND Lab",
+  "version": "1.0.0",
+  "description": "Generate values with the local RDRAND Lab app.",
+  "permissions": [
+    "clipboardWrite"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "RDRAND Lab"
+  },
+  "host_permissions": [
+    "http://127.0.0.1:8787/*"
+  ]
+}

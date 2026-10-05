@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RDRAND Lab</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">Local hardware generator</p>
+        <h1>RDRAND Lab</h1>
+      </div>
+      <span id="status" class="status" data-state="loading">Connecting</span>
+    </header>
+
+    <p id="message" class="message" role="alert" hidden></p>
+
+    <section class="metrics" aria-label="Generator status">
+      <div><span>Hardware</span><strong id="hardware">Checking…</strong></div>
+      <div><span>Seed generation</span><strong id="generation">—</strong></div>
+      <div><span>Values generated</span><strong id="total">—</strong></div>
+    </section>
+
+    <form id="generate-form">
+      <label>
+        Number of values
+        <input id="count" type="number" min="1" max="1000" value="16" required>
+      </label>
+      <label>
+        Exclusive upper bound
+        <input id="bound" type="number" min="0" max="18446744073709551615" value="100" required>
+        <small>Use 0 for full-width unsigned 64-bit values.</small>
+      </label>
+      <button id="generate" type="submit" disabled>Generate values</button>
+    </form>
+
+    <div class="actions">
+      <button id="reseed" class="secondary" type="button" disabled>Reseed from RDRAND</button>
+      <button id="copy" class="secondary" type="button" disabled>Copy values</button>
+    </div>
+    <ol id="values" aria-live="polite"><li class="placeholder">No values generated yet.</li></ol>
+    <footer>For simulation and general randomization only; not for cryptographic use.</footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
