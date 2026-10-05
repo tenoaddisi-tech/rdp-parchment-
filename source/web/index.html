@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>RDRAND Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Native Intel entropy monitor</p>
+      <h1>RDRAND Lab</h1>
+      <p class="subtitle">Hardware-seeded xoshiro256** generation, running on your CPU.</p>
+    </div>
+    <div id="status" class="status" data-state="loading" role="status">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span id="status-text">Connecting</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="metrics" aria-label="Generator status">
+      <article class="metric">
+        <span>Hardware instruction</span>
+        <strong id="hardware-value">Checking…</strong>
+      </article>
+      <article class="metric">
+        <span>Seed generation</span>
+        <strong id="generation-value">—</strong>
+      </article>
+      <article class="metric">
+        <span>Values generated</span>
+        <strong id="total-value">—</strong>
+      </article>
+    </section>
+
+    <section class="workspace">
+      <div class="controls-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Controls</p>
+            <h2>Generate values</h2>
+          </div>
+          <button id="reseed-button" class="secondary-button" type="button">Reseed from RDRAND</button>
+        </div>
+
+        <form id="generate-form">
+          <label>
+            <span>Number of values</span>
+            <input id="count" name="count" type="number" min="1" max="1000" value="16" required>
+          </label>
+          <label>
+            <span>Exclusive upper bound</span>
+            <input id="bound" name="bound" type="number" min="0" max="18446744073709551615" value="100" required>
+            <small>Use 0 for the full unsigned 64-bit range.</small>
+          </label>
+          <label>
+            <span>Display format</span>
+            <select id="format" name="format">
+              <option value="decimal">Decimal</option>
+              <option value="hex">Hexadecimal</option>
+            </select>
+          </label>
+          <button id="generate-button" class="primary-button" type="submit">Generate random values</button>
+        </form>
+
+        <div class="pipeline" aria-label="Random generation pipeline">
+          <div><span>01</span><strong>RDRAND</strong><small>Hardware source</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>02</span><strong>256-bit state</strong><small>Mixed seed</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>03</span><strong>xoshiro256**</strong><small>Fast output</small></div>
+        </div>
+      </div>
+
+      <div class="output-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Latest batch</p>
+            <h2>Random output</h2>
+          </div>
+          <button id="copy-button" class="text-button" type="button" disabled>Copy values</button>
+        </div>
+        <p id="message" class="message" role="alert" hidden></p>
+        <ol id="values" class="values" aria-live="polite">
+          <li class="placeholder">Generate a batch to inspect its output.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>This PRNG is designed for simulation and general randomization—not cryptographic keys, tokens, or nonces.</p>
+    <code>Bound to 127.0.0.1 only</code>
+  </footer>
+  <script src="/app.js"></script>
+</body>
+</html>
